@@ -220,63 +220,36 @@ vector<Face*> triangulate (const vector<Vert*> &verts) {
 void save_obj (const Mesh &mesh, const string &filename) {
 	set_indices((Mesh&)mesh);
     fstream file(filename.c_str(), ios::out);
-    for (int v = 0; v < (int)mesh.verts.size(); v++) {
-        const Vert *vert = mesh.verts[v];
-        file << "vt " << vert->u[0] << " " << vert->u[1] << " " << vert->u[2] << endl;
-        //if (vert->label)
-        //    file << "vl " << vert->label << endl;
-    }
+    // First output all vertices and their corresponding normals
     for (int n = 0; n < (int)mesh.nodes.size(); n++) {
         const Node *node = mesh.nodes[n];
         file << "v " << node->x[0] << " " << node->x[1] << " "
              << node->x[2] << endl;
-        if (norm2(node->x - node->y))
-            file << "ny " << node->y[0] << " " << node->y[1] << " "
-                 << node->y[2] << endl;
+        // Output velocity as normal vector (nv) immediately after each vertex
         if (norm2(node->v))
             file << "nv " << node->v[0] << " " << node->v[1] << " "
                  << node->v[2] << endl;
-        if (node->label)
-            file << "nl " << node->label << endl;
     }
+    // Then output all texture coordinates
+    for (int v = 0; v < (int)mesh.verts.size(); v++) {
+        const Vert *vert = mesh.verts[v];
+        file << "vt " << vert->u[0] << " " << vert->u[1] << " " << vert->u[2] << endl;
+    }
+    // Now output edges if needed
     for (int e = 0; e < (int)mesh.edges.size(); e++) {
         const Edge *edge = mesh.edges[e];
         if (edge->theta_ideal || edge->preserve) {
             file << "e " << edge->n[0]->index+1 << " " << edge->n[1]->index+1
                  << endl;
-            if (edge->theta_ideal)
-                file << "ea " << edge->theta_ideal << endl;
-            if (edge->damage)
-                file << "ed " << edge->damage << endl;
-            if (edge->preserve)
-                file << "ep " << edge->preserve << endl;
         }
     }
+    // Finally output the faces
     for (int f = 0; f < (int)mesh.faces.size(); f++) {
         const Face *face = mesh.faces[f];
         file << "f " << face->v[0]->node->index+1 << "/" << face->v[0]->index+1
              << " " << face->v[1]->node->index+1 << "/" << face->v[1]->index+1
              << " " << face->v[2]->node->index+1 << "/" << face->v[2]->index+1
              << endl;
-        if (face->material && mesh.parent) {
-        	file << "tm " << find(face->material, mesh.parent->materials) << endl;
-        }
-        if (norm2_F(face->Sp_bend)) {
-            const Mat3x3 &S = face->Sp_bend;
-            file << "tp ";
-            for (int i=0; i<3; i++) for (int j=0; j<3; j++)
-            	file << S(i,j) << " ";
-           	file << endl;
-        }
-        if (norm2_F(face->Sp_str)) {
-            const Mat3x3 &S = face->Sp_str;
-            file << "ts ";
-            for (int i=0; i<3; i++) for (int j=0; j<3; j++)
-            	file << S(i,j) << " ";
-            file << endl;
-        }
-        if (face->damage)
-            file << "td " << face->damage << endl;
     }
 }
 
