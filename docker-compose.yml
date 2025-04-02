@@ -1,0 +1,14 @@
+version: '3'
+
+services:
+  arcsim-cpu:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ./conf:/app/conf
+      - ./output:/app/output
+      - ./meshes:/app/meshes
+      - ./materials:/app/materials
+    # Override the default command to run a simulation
+    # command: simulate_offline ../conf/sphere.json output/simulation 
