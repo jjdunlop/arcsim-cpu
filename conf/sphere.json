@@ -3,7 +3,7 @@
 {
     "frame_time": 0.04,
     "frame_steps": 8,
-    "end_time": 10,
+    "end_time": 0.25,
     "cloths": [{
         "mesh": "meshes/square4.obj",
         "transform": {"translate": [-0.5, -1, 0.5]},
