@@ -72,8 +72,28 @@ void init_relax() {
 }
 
 static void save (vector<Mesh*> &meshes, int frame) {
-    if (!outprefix.empty() && frame < 100000)
-        save_state(sim, stringf("%s/%05d", outprefix.c_str(), frame));
+    if (!outprefix.empty() && frame < 100000) {
+        // Save binary state file
+        string binfile = stringf("%s/%05d", outprefix.c_str(), frame);
+        // Create directory if it doesn't exist
+        boost::filesystem::path parent_path = boost::filesystem::path(binfile).parent_path();
+        if (!boost::filesystem::exists(parent_path)) {
+            boost::filesystem::create_directories(parent_path);
+        }
+        save_state(sim, binfile);
+        
+        // Save OBJ files directly
+        for (int c = 0; c < (int)meshes.size(); c++) {
+            string objfile = stringf("%s/cloth%d_frame%d.obj", outprefix.c_str(), c, frame);
+            save_obj(*meshes[c], objfile);
+        }
+        
+        // Save obstacle OBJs too
+        for (int o = 0; o < (int)sim.obstacles.size(); o++) {
+            string objfile = stringf("%s/obstacle%d_frame%d.obj", outprefix.c_str(), o, frame);
+            save_obj(sim.obstacles[o].get_mesh(), objfile);
+        }
+    }
 }
 
 static void save_timings () {
@@ -120,8 +140,20 @@ void run_physics (const vector<string> &args) {
     }
     string json_file = args[0];
     string outprefix = args.size()>1 ? args[1] : "";
-    if (!outprefix.empty())
+    if (!outprefix.empty()) {
+        // Create output directory if it doesn't exist
+        try {
+            boost::filesystem::path dir(outprefix);
+            if (!boost::filesystem::exists(dir)) {
+                boost::filesystem::create_directories(dir);
+                cout << "Created output directory: " << outprefix << endl;
+            }
+        } catch (const boost::filesystem::filesystem_error& e) {
+            cerr << "Error creating output directory: " << e.what() << endl;
+            exit(EXIT_FAILURE);
+        }
         ensure_existing_directory(outprefix);
+    }
     init_physics(json_file, outprefix, false);
     init_relax();
     if (!outprefix.empty())

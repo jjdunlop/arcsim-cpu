@@ -16,15 +16,20 @@ add_executable(arcsim ${SOURCE})
 # OpenGL
 find_package(OpenGL REQUIRED)
 
-# FreeGLUT
-find_package(FreeGLUT REQUIRED)
+# GLUT
+if (WIN32)
+        find_package(FreeGLUT REQUIRED)
+else()
+        find_package(GLUT REQUIRED)
+endif()
 
 # jsoncpp
 if (WIN32)
         find_package(jsoncpp CONFIG REQUIRED)
-elseif()
+else()
         find_package(PkgConfig REQUIRED)
         pkg_check_modules(JSONCPP jsoncpp)
+        include_directories(/usr/include/jsoncpp)
 endif()
 
 # PNG
@@ -47,6 +52,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}
 
 include_directories(
         ${OPENGL_INCLUDE_DIRS}
+        ${GLUT_INCLUDE_DIRS}
         ${PNG_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
@@ -65,7 +71,7 @@ else()
         target_link_libraries(
                 arcsim
                 ${OPENGL_LIBRARIES}
-                FreeGLUT::freeglut
+                ${GLUT_LIBRARIES}
                 jsoncpp
                 ${PNG_LIBRARIES}
                 alglib
