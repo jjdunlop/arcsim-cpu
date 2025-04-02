@@ -46,6 +46,7 @@ int main (int argc, char **argv) {
     } actions[] = {
         {"simulate", display_physics},
         {"simulateoffline", run_physics},
+        {"simulate_offline", run_physics},
         {"resume", display_resume},
         {"resumeoffline", resume_physics},
         {"replay", display_replay},

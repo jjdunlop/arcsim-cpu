@@ -36,11 +36,13 @@
 #include <boost/filesystem.hpp>
 #include <cstdio>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
 string inprefix, outprefix;
 static fstream timingfile;
+bool export_obstacles = true; // Default to exporting obstacles
 
 Simulation sim;
 int frame;
@@ -88,10 +90,12 @@ static void save (vector<Mesh*> &meshes, int frame) {
             save_obj(*meshes[c], objfile);
         }
         
-        // Save obstacle OBJs too
-        for (int o = 0; o < (int)sim.obstacles.size(); o++) {
-            string objfile = stringf("%s/obstacle%d_frame%d.obj", outprefix.c_str(), o, frame);
-            save_obj(sim.obstacles[o].get_mesh(), objfile);
+        // Save obstacle OBJs too, if enabled
+        if (export_obstacles) {
+            for (int o = 0; o < (int)sim.obstacles.size(); o++) {
+                string objfile = stringf("%s/obstacle%d_frame%d.obj", outprefix.c_str(), o, frame);
+                save_obj(sim.obstacles[o].get_mesh(), objfile);
+            }
         }
     }
 }
@@ -130,16 +134,30 @@ void offline_loop() {
 }
 
 void run_physics (const vector<string> &args) {
-    if (args.size() != 1 && args.size() != 2) {
+    // Check for the --no-export-obstacles flag
+    bool found_flag = false;
+    vector<string> filtered_args;
+    for (const string &arg : args) {
+        if (arg == "--no-export-obstacles") {
+            export_obstacles = false;
+            found_flag = true;
+        } else {
+            filtered_args.push_back(arg);
+        }
+    }
+    
+    if (filtered_args.size() != 1 && filtered_args.size() != 2) {
         cout << "Runs the simulation in batch mode." << endl;
         cout << "Arguments:" << endl;
-        cout << "    <scene-file>: JSON file describing the simulation setup"
-             << endl;
+        cout << "    <scene-file>: JSON file describing the simulation setup" << endl;
         cout << "    <out-dir> (optional): Directory to save output in" << endl;
+        cout << "    --no-export-obstacles (optional): Skip exporting obstacle OBJs" << endl;
         exit(EXIT_FAILURE);
     }
-    string json_file = args[0];
-    string outprefix = args.size()>1 ? args[1] : "";
+    
+    string json_file = filtered_args[0];
+    string outprefix = filtered_args.size() > 1 ? filtered_args[1] : "";
+    
     if (!outprefix.empty()) {
         // Create output directory if it doesn't exist
         try {
@@ -154,6 +172,9 @@ void run_physics (const vector<string> &args) {
         }
         ensure_existing_directory(outprefix);
     }
+    
+    cout << "Obstacle export is " << (export_obstacles ? "enabled" : "disabled") << endl;
+    
     init_physics(json_file, outprefix, false);
     init_relax();
     if (!outprefix.empty())
@@ -180,15 +201,30 @@ void init_resume(const vector<string> &args) {
 }
 
 void resume_physics (const vector<string> &args) {
-    if (args.size() != 2) {
+    // Check for the --no-export-obstacles flag
+    bool found_flag = false;
+    vector<string> filtered_args;
+    for (const string &arg : args) {
+        if (arg == "--no-export-obstacles") {
+            export_obstacles = false;
+            found_flag = true;
+        } else {
+            filtered_args.push_back(arg);
+        }
+    }
+    
+    if (filtered_args.size() != 2) {
         cout << "Resumes an incomplete simulation in batch mode." << endl;
         cout << "Arguments:" << endl;
-        cout << "    <out-dir>: Directory containing simulation output files"
-             << endl;
+        cout << "    <out-dir>: Directory containing simulation output files" << endl;
         cout << "    <resume-frame>: Frame number to resume from" << endl;
+        cout << "    --no-export-obstacles (optional): Skip exporting obstacle OBJs" << endl;
         exit(EXIT_FAILURE);
     }
-    init_resume(args);
+    
+    cout << "Obstacle export is " << (export_obstacles ? "enabled" : "disabled") << endl;
+    
+    init_resume(filtered_args);
     offline_loop();
 }
 
