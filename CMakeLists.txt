@@ -15,6 +15,23 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Set optimization flags for cross-instance compatibility
+# Use a baseline architecture that works on both Intel and AMD CPUs
+message(STATUS "Setting up for cross-platform CPU compatibility")
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    # Optimization level
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+    
+    # Target x86-64-v2 instruction set (SSE4.2) - compatible with all listed instances
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64-v2")
+    
+    # Additional optimizations that don't affect numerical results
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -funroll-loops -finline-functions")
+    
+    # Explicitly avoid using native architecture
+    message(STATUS "Using generic x86-64-v2 target for cross-instance compatibility")
+endif()
+
 # Set Windows-specific settings
 if (WIN32)
     set(CMAKE_TOOLCHAIN_FILE "C:/vcpkg/scripts/buildsystems/vcpkg.cmake")
