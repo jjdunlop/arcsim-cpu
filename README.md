@@ -126,3 +126,10 @@ To use simple text output instead, add the `--raw-output` flag.
 This is a modified version of ARCSim-0.3.1 by Jonathan Dunlop, based on the improved version by [Wajov](https://github.com/Wajov/arcsim-0.3.1).
 
 The original ARCSim was developed by Rahul Narain, Armin Samii, and Tobias Pfaff.
+
+## Optimisation Notes
+
+*   **Eigen Sparse Matrix Construction (Commit `6bedc86`)**:
+    *   The process of building the sparse system matrix (`A`) for the physics step was optimised in `src/eigen.cpp`.
+    *   Instead of inserting matrix coefficients individually using `Eigen::SparseMatrix::coeffRef`, the code now constructs a list of non-zero triplets (`std::vector<Eigen::Triplet<double>>`) and builds the matrix in one step using `Eigen::SparseMatrix::setFromTriplets`.
+    *   **Safety Justification**: This change only modifies the *method* of constructing the sparse matrix representation within the Eigen library. It does not alter the mathematical values of the matrix elements or the right-hand-side vector (`b`) being passed to the linear solver (`Eigen::SimplicialLLT`). The input to the solver remains identical, guaranteeing that the simulation's physical behaviour is unchanged (within standard numerical precision). This is purely a performance improvement for the matrix assembly phase, significantly reducing the time spent in the `Physics` step based on profiling.
