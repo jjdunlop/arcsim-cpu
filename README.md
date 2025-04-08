@@ -133,3 +133,8 @@ The original ARCSim was developed by Rahul Narain, Armin Samii, and Tobias Pfaff
     *   The process of building the sparse system matrix (`A`) for the physics step was optimised in `src/eigen.cpp`.
     *   Instead of inserting matrix coefficients individually using `Eigen::SparseMatrix::coeffRef`, the code now constructs a list of non-zero triplets (`std::vector<Eigen::Triplet<double>>`) and builds the matrix in one step using `Eigen::SparseMatrix::setFromTriplets`.
     *   **Safety Justification**: This change only modifies the *method* of constructing the sparse matrix representation within the Eigen library. It does not alter the mathematical values of the matrix elements or the right-hand-side vector (`b`) being passed to the linear solver (`Eigen::SimplicialLLT`). The input to the solver remains identical, guaranteeing that the simulation's physical behaviour is unchanged (within standard numerical precision). This is purely a performance improvement for the matrix assembly phase, significantly reducing the time spent in the `Physics` step based on profiling.
+
+*   **Link-Time Optimisation (LTO) (Commit TBD)**:
+    *   Enabled Link-Time Optimisation by adding the `-flto` flag to `CMAKE_CXX_FLAGS` and `CMAKE_EXE_LINKER_FLAGS` in `CMakeLists.txt`.
+    *   LTO allows the compiler to perform optimisations across the entire codebase during the linking stage, potentially improving performance through better inlining and code generation.
+    *   **Safety Justification**: LTO is a standard compiler feature that aims to improve performance without changing the program's functional behaviour. While build times might increase, the resulting executable should produce the same results as a non-LTO build.
