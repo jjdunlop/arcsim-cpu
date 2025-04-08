@@ -1,4 +1,6 @@
 #include "eigen.hpp"
+#include <vector>
+#include <Eigen/Core>
 
 Eigen::VectorXd solve(const Eigen::SparseMatrix<double>& A, const Eigen::VectorXd& b) {
     Eigen::SimplicialLLT<Eigen::SparseMatrix<double>> cholesky;
@@ -8,23 +10,36 @@ Eigen::VectorXd solve(const Eigen::SparseMatrix<double>& A, const Eigen::VectorX
 
 std::vector<Vec3> linear_solve(const SpMat<Mat3x3>& A, const std::vector<Vec3>& b) {
     int n = b.size();
-    Eigen::SparseMatrix<double> At(3 * n, 3 * n);
-    for (int i = 0; i < A.rows.size(); i++)
-        for (int j = 0; j < A.rows[i].indices.size(); j++)
-            for (int k = 0; k < 3; k++)
-                for (int h = 0; h < 3; h++)
-                    At.coeffRef(3 * i + k, 3 * A.rows[i].indices[j] + h) = A.rows[i].entries[j](k, h);
-    
-    Eigen::VectorXd bt(3 * n);
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < 3; j++)
+    int dim = 3 * n;
+    Eigen::SparseMatrix<double> At(dim, dim);
+    std::vector<Eigen::Triplet<double>> tripletList;
+    tripletList.reserve(A.rows.size() * 9);
+
+    for (int i = 0; i < A.rows.size(); ++i) {
+        for (int j_idx = 0; j_idx < A.rows[i].indices.size(); ++j_idx) {
+            int j = A.rows[i].indices[j_idx];
+            const Mat3x3& block = A.rows[i].entries[j_idx];
+            
+            for (int k = 0; k < 3; ++k) {
+                for (int h = 0; h < 3; ++h) {
+                    tripletList.emplace_back(3 * i + k, 3 * j + h, block(k, h));
+                }
+            }
+        }
+    }
+
+    At.setFromTriplets(tripletList.begin(), tripletList.end());
+
+    Eigen::VectorXd bt(dim);
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < 3; ++j)
             bt(3 * i + j) = b[i][j];
 
     Eigen::VectorXd x = solve(At, bt);
 
     std::vector<Vec3> ans(n);
-    for (int i = 0; i < n; i++)
-        for (int j = 0; j < 3; j++)
+    for (int i = 0; i < n; ++i)
+        for (int j = 0; j < 3; ++j)
             ans[i][j] = x(3 * i + j);
     
     return ans;
