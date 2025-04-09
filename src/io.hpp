@@ -55,6 +55,9 @@ void save_screenshot (const std::string &filename);
 // check that output directory exists; if not, create it
 void ensure_existing_directory (const std::string &path);
 
+// Declaration for generate_obj action (defined in io.cpp)
+void generate_obj (const std::vector<std::string> &args);
+
 
 
 

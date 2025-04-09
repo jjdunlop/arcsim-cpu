@@ -138,3 +138,16 @@ The original ARCSim was developed by Rahul Narain, Armin Samii, and Tobias Pfaff
     *   Enabled Link-Time Optimisation by adding the `-flto` flag to `CMAKE_CXX_FLAGS` and `CMAKE_EXE_LINKER_FLAGS` in `CMakeLists.txt`.
     *   LTO allows the compiler to perform optimisations across the entire codebase during the linking stage, potentially improving performance through better inlining and code generation.
     *   **Safety Justification**: LTO is a standard compiler feature that aims to improve performance without changing the program's functional behaviour. While build times might increase, the resulting executable should produce the same results as a non-LTO build.
+
+## Robustness Enhancements
+
+*   **Resilient OBJ Saving (Commit TBD)**:
+    *   The `save_obj` function in `src/io.cpp` now includes retry logic to handle transient filesystem errors, which can occur in HPC environments using network storage (like FSx for Lustre).
+    *   If opening, writing, or closing an OBJ file initially fails, the function will retry the operation every 500ms for up to 10 seconds.
+    *   If the operation still fails after the timeout, an error is logged, and the simulation continues (without saving that specific file), preventing temporary filesystem issues from aborting the entire simulation.
+
+## Headless Build (`NO_OPENGL`)
+
+*   The build system now supports the `NO_OPENGL` preprocessor flag (`-DNO_OPENGL` added to `CMAKE_CXX_FLAGS` in `CMakeLists.txt`).
+*   When enabled, this flag excludes all OpenGL/GLUT dependent code (display, GUI interactions, related debugging features) from the compilation.
+*   This produces a smaller, truly headless executable suitable for server/HPC environments without graphics libraries, preventing potential errors related to missing display dependencies or accidental calls to GUI functions.

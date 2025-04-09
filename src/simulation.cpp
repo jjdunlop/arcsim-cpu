@@ -73,10 +73,12 @@ static void consistency(const char* text) {
 		cout << "> " << text << " ";
 		test_state(sim, "/tmp/c");
 	}
+#ifndef NO_OPENGL
     if (single_step) {
         cout << "> " << text << endl;
         wait_key();
     }
+#endif
 }
 
 void prepare (Simulation &sim) {
@@ -163,12 +165,16 @@ void advance_step (Simulation &sim) {
         sim.step_time *= 5;
         magic.collision_stiffness *= 0.4;
     }
+#ifndef NO_OPENGL
     Annotation::list.clear();
+#endif
     update_obstacles(sim, false);
     vector<Constraint*> cons = get_constraints(sim, true);
     consistency("init step");
     physics_step(sim, cons);
-    //cout << "phys" << endl;wait_key();
+    //cout << "phys" << endl;#ifndef NO_OPENGL
+    //wait_key();
+    //#endif
     consistency("physics");
     plasticity_step(sim);
     consistency("plasticity");
@@ -176,13 +182,17 @@ void advance_step (Simulation &sim) {
     consistency("strainlimit");
     collision_step(sim);
     consistency("collision");
-    // cout << "coll" << endl;wait_key();
+    // cout << "coll" << endl;#ifndef NO_OPENGL
+    //wait_key();
+    //#endif
     if (sim.step % sim.frame_steps == 0) {
         remeshing_step(sim);
         consistency("remeshing");
         sim.frame++;
     }
-    //cout << "rem" << endl;wait_key();
+    //cout << "rem" << endl;#ifndef NO_OPENGL
+    //wait_key();
+    //#endif
     
     delete_constraints(cons);
 }

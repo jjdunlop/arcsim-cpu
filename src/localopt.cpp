@@ -126,8 +126,10 @@ void LocalOpt<s>::gradient (const double *x, double *g) const {
         set_subvec(g, no, f);
         if (is_bullshit(f)) {
             cout << "bs alert!" << endl;
+#ifndef NO_OPENGL
             Annotation::add(nodes[no]);
             wait_key();
+#endif
         }
     }
 }

@@ -112,9 +112,11 @@ void MeshSubset::clear_flag(int flag) {
 }
 
 void MeshSubset::debug() {
+#ifndef NO_OPENGL
 	for (size_t i=0; i<support_nodes.size(); i++)
 		Annotation::add(support_nodes[i],Vec3(0,0,1));
 	for (size_t i=0; i<active_nodes.size(); i++)
 		Annotation::add(active_nodes[i],(active_nodes[i]->flag & Node::FlagMayBreak) ? Vec3(0,0.4,0) : Vec3(0.8,0,0.8));
 	wait_key();
+#endif
 }

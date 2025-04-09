@@ -44,16 +44,18 @@ int main (int argc, char **argv) {
         string name;
         void (*run) (const vector<string> &args);
     } actions[] = {
+#ifndef NO_OPENGL // Guard display-related actions
         {"simulate", display_physics},
+        {"resume", display_resume},
+        {"replay", display_replay},
+        {"test", display_testing},
+        {"generate", generate_obj}, // Also guard generate_obj as it's in displayreplay.cpp
+#endif // NO_OPENGL
         {"simulateoffline", run_physics},
         {"simulate_offline", run_physics},
-        {"resume", display_resume},
         {"resumeoffline", resume_physics},
-        {"replay", display_replay},
         {"merge", merge_meshes},
-        {"generate", generate_obj},
         {"split", split_meshes},
-        {"test", display_testing},
         {"tri2obj", tri2obj},
         {"debug", debug}
     };

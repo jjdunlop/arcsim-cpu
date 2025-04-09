@@ -103,7 +103,9 @@ vector<Constraint*> SoftHandle::get_constraints (double t) {
 void SoftHandle::add_forces(double t, vector<Vec3> &fext, vector<Mat3x3>& Jext) {
 	double s = strength(t);
 	if (!s) return;
-	Annotation::add((motion) ? motion->pos(t).apply(center) : center); 
+#ifndef NO_OPENGL
+	Annotation::add((motion) ? motion->pos(t).apply(center) : center);
+#endif
 
     for (size_t v = 0; v < mesh->verts.size(); v++) {
         Vert *vert = mesh->verts[v];

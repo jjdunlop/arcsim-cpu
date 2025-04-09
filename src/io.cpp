@@ -36,6 +36,9 @@
 #include <fstream>
 #include <png.h>
 #include <sstream>
+#include <chrono>  // Added for timing
+#include <thread>  // Added for sleep
+#include <iostream> // Added for error messages
 using namespace std;
 
 
@@ -218,38 +221,86 @@ vector<Face*> triangulate (const vector<Vert*> &verts) {
 }
 
 void save_obj (const Mesh &mesh, const string &filename) {
-	set_indices((Mesh&)mesh);
-    fstream file(filename.c_str(), ios::out);
-    // First output all vertices and their corresponding normals
-    for (int n = 0; n < (int)mesh.nodes.size(); n++) {
-        const Node *node = mesh.nodes[n];
-        file << "v " << node->x[0] << " " << node->x[1] << " "
-             << node->x[2] << endl;
-        // Output velocity as normal vector (nv) immediately after each vertex
-        if (norm2(node->v))
-            file << "nv " << node->v[0] << " " << node->v[1] << " "
-                 << node->v[2] << endl;
-    }
-    // Then output all texture coordinates
-    for (int v = 0; v < (int)mesh.verts.size(); v++) {
-        const Vert *vert = mesh.verts[v];
-        file << "vt " << vert->u[0] << " " << vert->u[1] << " " << vert->u[2] << endl;
-    }
-    // Now output edges if needed
-    for (int e = 0; e < (int)mesh.edges.size(); e++) {
-        const Edge *edge = mesh.edges[e];
-        if (edge->theta_ideal || edge->preserve) {
-            file << "e " << edge->n[0]->index+1 << " " << edge->n[1]->index+1
-                 << endl;
+    set_indices((Mesh&)mesh);
+
+    const int max_retries = 20; // Roughly 10 seconds with 500ms sleep
+    const std::chrono::milliseconds retry_delay(500);
+    const std::chrono::seconds timeout_duration(10);
+    auto start_time = std::chrono::steady_clock::now();
+    bool success = false;
+
+    for (int attempt = 1; attempt <= max_retries; ++attempt) {
+        fstream file(filename.c_str(), ios::out);
+
+        if (!file.is_open()) {
+            // Open failed
+            std::cerr << "Warning: Failed to open file " << filename << " on attempt " << attempt << ". Retrying..." << std::endl;
+        } else {
+            // File opened, attempt writing
+            // First output all vertices and their corresponding normals
+            for (int n = 0; n < (int)mesh.nodes.size(); n++) {
+                const Node *node = mesh.nodes[n];
+                file << "v " << node->x[0] << " " << node->x[1] << " "
+                     << node->x[2] << endl;
+                if (norm2(node->v))
+                    file << "nv " << node->v[0] << " " << node->v[1] << " "
+                         << node->v[2] << endl;
+            }
+            // Then output all texture coordinates
+            for (int v = 0; v < (int)mesh.verts.size(); v++) {
+                const Vert *vert = mesh.verts[v];
+                file << "vt " << vert->u[0] << " " << vert->u[1] << " " << vert->u[2] << endl;
+            }
+            // Now output edges if needed
+            for (int e = 0; e < (int)mesh.edges.size(); e++) {
+                const Edge *edge = mesh.edges[e];
+                if (edge->theta_ideal || edge->preserve) {
+                    file << "e " << edge->n[0]->index+1 << " " << edge->n[1]->index+1
+                         << endl;
+                }
+            }
+            // Finally output the faces
+            for (int f = 0; f < (int)mesh.faces.size(); f++) {
+                const Face *face = mesh.faces[f];
+                file << "f " << face->v[0]->node->index+1 << "/" << face->v[0]->index+1
+                     << " " << face->v[1]->node->index+1 << "/" << face->v[1]->index+1
+                     << " " << face->v[2]->node->index+1 << "/" << face->v[2]->index+1 << endl;
+            }
+
+            bool write_ok = file.good();
+            file.close();
+            bool close_ok = !file.fail(); // Check fail bit after close
+
+            if (write_ok && close_ok) {
+                success = true;
+                break; // Success!
+            } else {
+                // Write or close failed
+                std::cerr << "Warning: Failed to write/close file " << filename << " on attempt " << attempt 
+                          << " (write_ok:" << write_ok << ", close_ok:" << close_ok << "). Retrying..." << std::endl;
+                // Ensure file is closed even if closing initially failed state bits
+                if (file.is_open()) file.close(); 
+            }
         }
+
+        // Check for timeout before sleeping
+        auto current_time = std::chrono::steady_clock::now();
+        if (current_time - start_time > timeout_duration) {
+            std::cerr << "Error: Timeout reached after " << attempt << " attempts trying to save " << filename << ". Aborting save." << std::endl;
+            // Decide how to handle timeout: maybe return an error code, throw exception, or abort?
+            // For now, just print error and continue without saving successfully.
+            // Or uncomment below to abort the whole simulation:
+            // abort(); 
+            break; // Exit loop on timeout
+        }
+        
+        // Wait before retrying
+        std::this_thread::sleep_for(retry_delay);
     }
-    // Finally output the faces
-    for (int f = 0; f < (int)mesh.faces.size(); f++) {
-        const Face *face = mesh.faces[f];
-        file << "f " << face->v[0]->node->index+1 << "/" << face->v[0]->index+1
-             << " " << face->v[1]->node->index+1 << "/" << face->v[1]->index+1
-             << " " << face->v[2]->node->index+1 << "/" << face->v[2]->index+1
-             << endl;
+
+    if (!success) {
+        std::cerr << "Error: Failed to save file " << filename << " after multiple retries." << std::endl;
+        // Handle persistent failure if necessary
     }
 }
 

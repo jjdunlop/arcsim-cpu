@@ -132,8 +132,12 @@ void collision_response (vector<Mesh*> &meshes, const vector<Constraint*> &cons,
         // vector<Impact> impacts = find_impacts(accs, obs_accs);
         // for (size_t i = 0; i < impacts.size(); i++)
         //     for (int n = 0; n < 4; n++)
+#ifndef NO_OPENGL
         //         Annotation::add(impacts[i].nodes[n]);
+#endif
+#ifndef NO_OPENGL
         // wait_key();
+#endif
         //debug_save_meshes(meshes, "meshes");
         //debug_save_meshes(obs_meshes, "obsmeshes");
         //exit(1);
@@ -181,7 +185,10 @@ void update_active (const vector<AccelStruct*> &accs,
                     cout << "m" << i << " " << &(sim.cloths[i].mesh) << endl;
                 for (int i=0;i<sim.obstacle_meshes.size(); i++)
                     cout << "o" << i << " " << sim.obstacle_meshes[i] << endl;
-                    Annotation::add((Node*)node); wait_key();}
+#ifndef NO_OPENGL
+                    Annotation::add((Node*)node); wait_key();
+#endif
+                }
 
             for (int v = 0; v < (int)node->verts.size(); v++)
                 for (int f = 0; f < (int)node->verts[v]->adjf.size(); f++)
