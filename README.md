@@ -1,61 +1,64 @@
-# ARCSim-CPU
+# ARCSim-CPU 🧵
 
-This is a fork of the ARCSim-0.3.1 cloth simulation software. It includes several improvements over the original version:
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-1. Replaced makefile with CMake for easier building
-2. Replaced some old libraries with Eigen
-3. Enhanced the `simulate_offline` mode to directly save OBJ files using a consistent naming convention
-4. Automatic creation of output directories
-5. Added option to disable obstacle exports
-6. Structured JSON output for better integration with other software
-7. Automated installation script for Ubuntu systems
-8. Docker support for containerised deployment
+This repository contains **ARCSim-CPU**, a modified fork of the ARCSim-0.3.1 cloth simulation software, focusing on CPU-based simulation and incorporating several enhancements for ease of use, integration, and execution in HPC environments.
 
-## Modifications
+## Overview ✨
 
-The main modifications in this fork include:
+ARCSim is a powerful research tool for simulating the complex behaviour of cloth, including effects like folding, crumpling, tearing, and collisions. This fork maintains the core physics engine while adding improvements such as:
 
-- **Direct OBJ Export**: The simulation now directly generates OBJ files in addition to binary state files
-- **Naming Convention**: Files are saved as `cloth{number}_frame{frame}.obj` and `obstacle{number}_frame{frame}.obj`
-- **Automatic Directory Creation**: Output directories are created automatically if they don't exist
-- **Optional Obstacle Export**: Use the `--no-export-obstacles` flag to skip exporting obstacle OBJs
-- **Improved Command Naming**: The command is now available as both `simulateoffline` and `simulate_offline`
-- **JSON Output Format**: The terminal output is now structured as JSON for easier parsing by other programs
-- **Automated Installation**: A script to automatically install dependencies and build the software
-- **Docker Support**: Docker configuration for containerised deployment
+*   CMake-based build system
+*   Integration with the Eigen library
+*   Enhanced offline simulation mode with direct OBJ export and structured output
+*   Robustness features for HPC environments
+*   Containerisation support via Docker
 
-## Dependencies
+## Key Features 🚀
 
-* FreeGLUT
-* jsoncpp
-* libPNG
-* Eigen3
-* ALGLIB (already included in the lib directory)
-* Boost
+*   **Modern Build System:** Uses CMake for easier cross-platform building.
+*   **Direct OBJ Export:** Generates `.obj` files directly during offline simulation runs.
+*   **Consistent Naming:** Saves output files with clear, predictable names (e.g., `cloth0_frame123.obj`).
+*   **Automatic Directory Creation:** Output directories specified in commands are created automatically.
+*   **Optional Obstacle Export:** Control whether obstacle geometry is saved using a command-line flag.
+*   **Structured JSON Output:** Provides machine-readable JSON output for easier scripting and integration.
+*   **Robust File Saving:** Includes retry logic for saving OBJ files, improving reliability on network filesystems (FSx, NFS).
+*   **Headless Build Option:** Supports compiling without OpenGL dependencies for server/HPC use.
+*   **Automated Installation:** Includes an `install.sh` script for Ubuntu dependencies.
+*   **Docker Support:** Provides `Dockerfile` and `docker-compose.yml` for containerised deployment.
 
-## Installation
+## Citation Requirements 📜
 
-### Automated Installation (Ubuntu)
+If you use this code or the original ARCSim library as part of work for a publication, **you must cite the relevant original papers**:
 
-The easiest way to install ARCSim-CPU on Ubuntu is to use the provided installation script:
+1.  **Remeshing:**
+    > Rahul Narain, Armin Samii, and James F. O'Brien. "Adaptive Anisotropic Remeshing for Cloth Simulation". *ACM Transactions on Graphics*, 31(6):147:1–10, November 2012. Proceedings of ACM SIGGRAPH Asia 2012, Singapore.
+
+2.  **Adaptive Sheets:**
+    > Rahul Narain, Tobias Pfaff, and James F. O'Brien. "Folding and Crumpling Adaptive Sheets". *ACM Transactions on Graphics*, 32(4):51:1–8, July 2013. Proceedings of ACM SIGGRAPH 2013, Anaheim.
+
+3.  **Tearing & Cracking:**
+    > Tobias Pfaff, Rahul Narain, Juan Miguel de Joya, and James F. O'Brien. "Adaptive Tearing and Cracking of Thin Sheets". *ACM Transactions on Graphics*, 33(4):110:1–9, July 2014. Proceedings of ACM SIGGRAPH 2014, Vancouver.
+
+## Installation 🛠️
+
+### Option 1: Automated Installation (Ubuntu)
+
+The simplest method for Ubuntu users:
 
 ```bash
 # Clone the repository
 git clone https://github.com/jjdunlop/arcsim-cpu.git
 cd arcsim-cpu
 
-# Run the installation script
+# Run the installation script (may require sudo)
 ./install.sh
 ```
+This script installs dependencies, builds the software, and places the executable in `./build/arcsim`.
 
-The script will automatically:
-1. Install all required dependencies
-2. Build the ARCSim-CPU software
-3. Notify you when the installation is complete
+### Option 2: Docker / Docker Compose
 
-### Docker Installation
-
-ARCSim-CPU can also be run using Docker, which eliminates the need to install dependencies directly on your system:
+Build and run in a container, avoiding local dependency installation:
 
 ```bash
 # Clone the repository
@@ -65,89 +68,123 @@ cd arcsim-cpu
 # Build the Docker image
 docker build -t arcsim-cpu .
 
-# Run a simulation with Docker
-docker run -v $(pwd)/output:/app/output arcsim-cpu simulate_offline ../conf/sphere.json output/simulation
-```
+# Example: Run a simulation, mounting output directory
+# (Replace paths and config file as needed)
+docker run --rm -v "$(pwd)/output_docker:/app/output" arcsim-cpu \
+  simulate_offline conf/sphere.json output/simulation
 
-Alternatively, you can use docker-compose:
+# --- OR using Docker Compose ---
 
-```bash
-# Build and run using docker-compose
+# Build and run with docker-compose
 docker-compose build
-docker-compose run arcsim-cpu simulate_offline ../conf/sphere.json output/simulation
+docker-compose run --rm arcsim-cpu \
+  simulate_offline conf/sphere.json output/simulation
 ```
 
-### Manual Building
+### Option 3: Manual Build (Other Linux / macOS)
 
-If you prefer to build manually or are on a different platform:
+1.  **Install Dependencies:** Ensure you have CMake, a C++14 compliant compiler (GCC/Clang), Make, and the libraries listed under [Dependencies](#dependencies).
+2.  **Build:**
+    ```bash
+    # Clone the repository
+    git clone https://github.com/jjdunlop/arcsim-cpu.git
+    cd arcsim-cpu
+
+    # Create build directory and run CMake
+    mkdir build && cd build
+    cmake ..
+
+    # Compile (use -jN for parallel build, e.g., make -j$(nproc))
+    make -j$(nproc)
+    ```
+    The executable will be at `./build/arcsim`.
+
+## Usage ⚡
+
+The primary way to run simulations without a GUI is using the `simulate_offline` command.
+
+**Basic Syntax:**
 
 ```bash
-mkdir build
-cd build
-cmake ..
-make -j$(nproc)
+./build/arcsim simulate_offline <config_file.json> [<output_directory>]
 ```
 
-## Running a Simulation
+*   `<config_file.json>`: Path to the JSON file describing the simulation scene and parameters. (Examples in `conf/`)
+*   `<output_directory>` (Optional): Path where simulation outputs (OBJ files, timing data, etc.) will be saved. If omitted, no files are saved.
+
+**Command-Line Flags:**
+
+*   `--no-export-obstacles`: Add this flag to prevent saving obstacle geometry (`obstacle*.obj`) files. Only cloth files (`cloth*.obj`) will be saved.
+*   `--raw-output`: Use a simpler, human-readable text format for console output instead of the default structured JSON.
+
+**Examples:**
 
 ```bash
-# Standard simulation with all exports
-./build/arcsim simulate_offline conf/sphere.json output/simulation
+# Run simulation defined in sphere.json, save results to output/sim_sphere
+./build/arcsim simulate_offline conf/sphere.json output/sim_sphere
 
-# Simulation without exporting obstacle OBJs
-./build/arcsim simulate_offline --no-export-obstacles conf/sphere.json output/simulation
+# Run simulation, save results, but don't save obstacle files
+./build/arcsim simulate_offline --no-export-obstacles conf/sphere.json output/sim_sphere_nobs
 
-# Use simpler output format (not JSON) for human readability
-./build/arcsim simulate_offline --raw-output conf/sphere.json output/simulation
+# Run simulation with simple text output (useful for direct viewing)
+./build/arcsim simulate_offline --raw-output conf/sphere.json output/sim_sphere_raw
 ```
 
-## Output Format
+## Output Format 📄
 
-When run with the default options, the program outputs structured JSON data that can be easily parsed by other programs:
+By default, `arcsim` prints structured JSON logs to standard output, useful for programmatic parsing:
 
 ```json
 { "status": "CONFIG", "details": "json_file=conf/sphere.json, output_dir=output/simulation, export_obstacles=true" }
 { "status": "INIT_PHYSICS_START", "details": "conf/sphere.json" }
-{ "status": "INIT_PHYSICS_COMPLETE" }
-{ "status": "INIT_RELAX_START" }
-{ "status": "INIT_RELAX_COMPLETE" }
 { "status": "SIMULATION_START", "details": "end_time=10, end_frame=250" }
 { "frame": 0, "step": 0, "time": 0.000000 }
 { "status": "SAVE_START", "details": "frame=0" }
 { "saved": "cloth0", "frame": 0, "file": "output/simulation/cloth0_frame0.obj" }
-{ "saved": "obstacle0", "frame": 0, "file": "output/simulation/obstacle0_frame0.obj" }
 { "status": "SAVE_COMPLETE", "details": "frame=0" }
 ```
 
-To use simple text output instead, add the `--raw-output` flag.
+Use the `--raw-output` flag for simpler, human-readable console output.
 
-## Credit
-
-This is a modified version of ARCSim-0.3.1 by Jonathan Dunlop, based on the improved version by [Wajov](https://github.com/Wajov/arcsim-0.3.1).
-
-The original ARCSim was developed by Rahul Narain, Armin Samii, and Tobias Pfaff.
-
-## Optimisation Notes
+## Performance & Build Notes ⚙️
 
 *   **Eigen Sparse Matrix Construction (Commit `6bedc86`)**:
-    *   The process of building the sparse system matrix (`A`) for the physics step was optimised in `src/eigen.cpp`.
-    *   Instead of inserting matrix coefficients individually using `Eigen::SparseMatrix::coeffRef`, the code now constructs a list of non-zero triplets (`std::vector<Eigen::Triplet<double>>`) and builds the matrix in one step using `Eigen::SparseMatrix::setFromTriplets`.
-    *   **Safety Justification**: This change only modifies the *method* of constructing the sparse matrix representation within the Eigen library. It does not alter the mathematical values of the matrix elements or the right-hand-side vector (`b`) being passed to the linear solver (`Eigen::SimplicialLLT`). The input to the solver remains identical, guaranteeing that the simulation's physical behaviour is unchanged (within standard numerical precision). This is purely a performance improvement for the matrix assembly phase, significantly reducing the time spent in the `Physics` step based on profiling.
+    *   The assembly of the sparse system matrix in the physics step (`src/eigen.cpp`) was optimised using Eigen's `setFromTriplets` method. This significantly reduced the time spent in the dominant `Physics` step compared to inserting coefficients individually.
+    *   *Safety:* This changes only the *method* of matrix construction, not the mathematical values, preserving simulation results.
 
-*   **Link-Time Optimisation (LTO) (Commit TBD)**:
-    *   Enabled Link-Time Optimisation by adding the `-flto` flag to `CMAKE_CXX_FLAGS` and `CMAKE_EXE_LINKER_FLAGS` in `CMakeLists.txt`.
-    *   LTO allows the compiler to perform optimisations across the entire codebase during the linking stage, potentially improving performance through better inlining and code generation.
-    *   **Safety Justification**: LTO is a standard compiler feature that aims to improve performance without changing the program's functional behaviour. While build times might increase, the resulting executable should produce the same results as a non-LTO build.
+*   **Link-Time Optimisation (LTO)**:
+    *   LTO (`-flto`) was tested (Commit `d02b30f`) but subsequently disabled (Commit `4ba4c12`) due to linker errors when combined with the `NO_OPENGL` build flag.
+    *   It remains disabled currently to ensure compatibility with headless builds.
 
-## Robustness Enhancements
+*   **Robustness Enhancements (Commit `4ba4c12`)**:
+    *   **Resilient OBJ Saving**: `save_obj` (`src/io.cpp`) now retries file operations for up to 10 seconds, improving robustness against transient filesystem errors in HPC/network storage environments.
 
-*   **Resilient OBJ Saving (Commit TBD)**:
-    *   The `save_obj` function in `src/io.cpp` now includes retry logic to handle transient filesystem errors, which can occur in HPC environments using network storage (like FSx for Lustre).
-    *   If opening, writing, or closing an OBJ file initially fails, the function will retry the operation every 500ms for up to 10 seconds.
-    *   If the operation still fails after the timeout, an error is logged, and the simulation continues (without saving that specific file), preventing temporary filesystem issues from aborting the entire simulation.
+*   **Headless Build (`NO_OPENGL`) (Commit `4ba4c12`)**:
+    *   The build system supports the `NO_OPENGL` flag (`-DNO_OPENGL` added to CMake flags).
+    *   This excludes all OpenGL/GLUT dependencies, producing a smaller executable suitable for servers/HPC and preventing potential graphics-related errors or runtime checks. Necessary code references to display/debug functions have been guarded (`#ifndef NO_OPENGL`).
 
-## Headless Build (`NO_OPENGL`)
+*   **Threading (OpenMP)**:
+    *   The code utilises OpenMP for parallelism, primarily in collision detection.
+    *   By default, it may try to use all available cores. For HPC environments (e.g., Slurm), control thread count using the `OMP_NUM_THREADS` environment variable. Set it equal to the value requested via `--cpus-per-task` in your Slurm script for optimal performance and resource utilisation.
+    *   Profiling suggests single-core execution (`OMP_NUM_THREADS=1`) might be most efficient for maximising simulation throughput on multi-core nodes due to serial bottlenecks in the physics step.
 
-*   The build system now supports the `NO_OPENGL` preprocessor flag (`-DNO_OPENGL` added to `CMAKE_CXX_FLAGS` in `CMakeLists.txt`).
-*   When enabled, this flag excludes all OpenGL/GLUT dependent code (display, GUI interactions, related debugging features) from the compilation.
-*   This produces a smaller, truly headless executable suitable for server/HPC environments without graphics libraries, preventing potential errors related to missing display dependencies or accidental calls to GUI functions.
+## Dependencies 📚
+
+*   CMake (>= 3.20 recommended)
+*   C++14 compliant compiler (GCC or Clang recommended)
+*   Make (or other build generator like Ninja)
+*   FreeGLUT (`freeglut3-dev` on Ubuntu) - *Only required if building **without** the `NO_OPENGL` flag.*
+*   jsoncpp (`libjsoncpp-dev` on Ubuntu)
+*   libPNG (`libpng-dev` on Ubuntu)
+*   Eigen3 (`libeigen3-dev` on Ubuntu)
+*   Boost (`libboost-all-dev` on Ubuntu - specifically system, filesystem, thread)
+*   OpenMP (usually included with modern compilers)
+*   ALGLIB (included in the `lib/` directory)
+
+## Acknowledgements 🙏
+
+This project is a fork and enhancement of ARCSim-0.3.1.
+
+*   **Original ARCSim Developers:** Rahul Narain, Armin Samii, Tobias Pfaff, James F. O'Brien (UC Berkeley).
+*   Based on improvements from the fork by [Wajov](https://github.com/Wajov/arcsim-0.3.1).
+*   Further modified and maintained by [Jonathan Dunlop](https://github.com/jjdunlop/arcsim-cpu).
